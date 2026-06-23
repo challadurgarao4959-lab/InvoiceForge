@@ -1,0 +1,33 @@
+# Git and metadata
+.git
+.gitignore
+.github
+
+# Virtual environments
+.venv
+venv
+ENV
+
+# Python caches
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Local data and secrets
+.env
+data/
+*.db
+*.sqlite
+*.sqlite3
+
+# Test and development files
+tests.py
+op.py
+*.pdf
+scratch/
+
+# Documentation and planning artifacts
+*.md
+.agents
+.gemini
