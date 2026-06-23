@@ -1,4 +1,12 @@
-# InvoiceForge — Python dependencies
-flask>=3.0.0
-reportlab>=4.0.0
-gunicorn>=21.0.0     # production WSGI server (Linux/macOS only)
+blinker==1.9.0
+charset-normalizer==3.4.7
+click==8.4.1
+Flask==3.1.3
+gunicorn==26.0.0
+itsdangerous==2.2.0
+Jinja2==3.1.6
+MarkupSafe==3.0.3
+packaging==26.2
+pillow==12.2.0
+reportlab==4.5.1
+Werkzeug==3.1.8
