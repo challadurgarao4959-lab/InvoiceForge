@@ -1,0 +1,1567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>InvoiceForge — Professional Invoice Generator</title>
+<link rel="stylesheet" href="/static/css/print.css"/>
+<link rel="icon" href="/favicon.ico" type="image/svg+xml"/>
+{%- raw %}
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:15px;scroll-behavior:smooth}
+body{font-family:'Inter',system-ui,sans-serif;background:#0F172A;color:#E2E8F0;min-height:100vh;overflow-x:hidden}
+
+/* Shell */
+.shell{display:flex;min-height:100vh}
+
+/* Sidebar */
+.sidebar{width:224px;flex-shrink:0;background:#070E1A;border-right:1px solid #1E293B;display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:50;transition:transform .25s}
+.sidebar-logo{padding:18px 16px 14px;border-bottom:1px solid #1E293B;display:flex;align-items:center;gap:10px}
+.logo-mark{width:32px;height:32px;background:linear-gradient(135deg,#3B82F6,#8B5CF6);border-radius:8px;display:grid;place-items:center;flex-shrink:0}
+.logo-text{font-size:15px;font-weight:700;letter-spacing:-.02em;color:#F1F5F9}
+.logo-text span{color:#60A5FA}
+.sidebar-nav{flex:1;padding:10px 0;overflow-y:auto}
+.nav-section{padding:0 8px 2px}
+.nav-label{font-size:10px;font-weight:700;color:#334155;text-transform:uppercase;letter-spacing:.12em;padding:10px 8px 4px}
+.nav-btn{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:7px;cursor:pointer;transition:all .12s;color:#64748B;font-size:13px;font-weight:500;border:none;background:none;width:100%;text-align:left;position:relative}
+.nav-btn:hover{background:#0F172A;color:#CBD5E1}
+.nav-btn.active{background:rgba(59,130,246,.12);color:#60A5FA}
+.nav-btn svg{width:15px;height:15px;flex-shrink:0}
+.nav-count{margin-left:auto;background:#1E3A5F;color:#60A5FA;font-size:10px;font-weight:700;padding:1px 7px;border-radius:20px;min-width:22px;text-align:center}
+.nav-count.red{background:rgba(239,68,68,.15);color:#EF4444}
+.sidebar-footer{padding:10px 8px;border-top:1px solid #1E293B;display:flex;flex-direction:column;gap:2px}
+@media(max-width:920px){
+  .sidebar{transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0);box-shadow:0 0 60px rgba(0,0,0,.7)}
+  .main{margin-left:0!important}
+  .overlay{display:block!important}
+}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:49}
+
+/* Main */
+.main{margin-left:224px;flex:1;display:flex;flex-direction:column;min-height:100vh}
+
+/* Topbar */
+.topbar{background:#070E1A;border-bottom:1px solid #1E293B;padding:0 24px;height:54px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:40}
+.menu-btn{display:none;background:none;border:none;color:#64748B;cursor:pointer;padding:4px;line-height:0}
+@media(max-width:920px){.menu-btn{display:block}}
+.topbar-title{font-size:14px;font-weight:600;color:#F1F5F9;flex:1}
+.topbar-right{display:flex;gap:8px;align-items:center}
+
+/* Views */
+.view{display:none;flex:1;flex-direction:column}
+.view.active{display:flex}
+
+/* ════ DASHBOARD ════ */
+.pg{padding:24px;flex:1;overflow-y:auto}
+.pg-header{margin-bottom:20px}
+.pg-title{font-size:18px;font-weight:700;color:#F1F5F9;letter-spacing:-.02em}
+.pg-sub{font-size:13px;color:#64748B;margin-top:3px}
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:24px}
+.sc{background:#0F1F35;border:1px solid #1E3A5F;border-radius:12px;padding:18px;position:relative;overflow:hidden;transition:border-color .15s}
+.sc:hover{border-color:#2D4E7A}
+.sc::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;border-radius:12px 12px 0 0}
+.sc.blue::after{background:linear-gradient(90deg,#3B82F6,#60A5FA)}
+.sc.green::after{background:linear-gradient(90deg,#10B981,#34D399)}
+.sc.amber::after{background:linear-gradient(90deg,#F59E0B,#FCD34D)}
+.sc.red::after{background:linear-gradient(90deg,#EF4444,#F87171)}
+.sc-label{font-size:10px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px}
+.sc-val{font-size:24px;font-weight:800;color:#F1F5F9;letter-spacing:-.04em;line-height:1}
+.sc-sub{font-size:11px;color:#475569;margin-top:5px}
+.dash-grid{display:grid;grid-template-columns:1fr 340px;gap:16px}
+@media(max-width:1100px){.dash-grid{grid-template-columns:1fr}}
+.section-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.section-title{font-size:12px;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:.1em}
+/* Chart */
+.chart-wrap{background:#0F1F35;border:1px solid #1E3A5F;border-radius:12px;padding:18px}
+.chart-canvas-wrap{height:180px;position:relative;margin-top:12px}
+.chart-bars{display:flex;align-items:flex-end;gap:8px;height:160px;padding:0 4px}
+.chart-bar-group{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
+.chart-bar{width:100%;border-radius:4px 4px 0 0;transition:opacity .15s;cursor:pointer;min-height:3px}
+.chart-bar:hover{opacity:.8}
+.chart-label{font-size:10px;color:#475569;text-align:center}
+.chart-legend{display:flex;gap:14px;margin-top:10px}
+.chart-leg-item{display:flex;align-items:center;gap:5px;font-size:11px;color:#64748B}
+.chart-leg-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+/* Quick stats panel */
+.quick-panel{background:#0F1F35;border:1px solid #1E3A5F;border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:14px}
+.qp-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #1E293B}
+.qp-row:last-child{border:none}
+.qp-label{font-size:13px;color:#64748B}
+.qp-val{font-size:13px;font-weight:600;font-family:'Fira Code',monospace;color:#F1F5F9}
+/* Recent table */
+.itbl{background:#0F1F35;border:1px solid #1E3A5F;border-radius:12px;overflow:hidden}
+.itbl-hd{display:grid;grid-template-columns:100px 1fr 120px 90px 110px 90px;padding:9px 14px;border-bottom:1px solid #1E293B;gap:10px}
+.itbl-hd span,.itbl-hd-cell{font-size:10px;font-weight:700;color:#334155;text-transform:uppercase;letter-spacing:.09em}
+.itbl-row{display:grid;grid-template-columns:100px 1fr 120px 90px 110px 90px;padding:11px 14px;border-bottom:1px solid #1E293B;gap:10px;align-items:center;transition:background .1s;cursor:pointer}
+.itbl-row:hover{background:#162032}
+.itbl-row:last-child{border:none}
+.itbl-cell{font-size:13px;color:#94A3B8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.itbl-cell.mono{font-family:'Fira Code',monospace;font-size:12px;color:#60A5FA;font-weight:500}
+.itbl-cell.bold{font-family:'Fira Code',monospace;font-weight:700;color:#F1F5F9}
+.itbl-cell.dim{font-size:12px;color:#475569}
+.itbl-acts{display:flex;gap:5px}
+.ia-btn{background:none;border:1px solid #1E3A5F;border-radius:5px;color:#475569;padding:4px 8px;cursor:pointer;font-size:11px;font-weight:500;transition:all .1s;display:flex;align-items:center;gap:3px;line-height:1}
+.ia-btn:hover.e{border-color:#3B82F6;color:#60A5FA}
+.ia-btn:hover.p{border-color:#10B981;color:#34D399}
+.ia-btn:hover.d{border-color:#EF4444;color:#F87171}
+.ia-btn:hover.cp{border-color:#8B5CF6;color:#A78BFA}
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600}
+.badge.paid   {background:rgba(16,185,129,.12);color:#34D399}
+.badge.pending{background:rgba(245,158,11,.12);color:#FCD34D}
+.badge.overdue{background:rgba(239,68,68,.12);color:#F87171}
+.empty{padding:40px;text-align:center;color:#334155}
+.empty svg{margin:0 auto 10px;opacity:.25;display:block}
+.empty p{font-size:13px}
+.empty a{color:#3B82F6;text-decoration:none}
+
+/* ════ EDITOR ════ */
+.editor-wrap{display:grid;grid-template-columns:1fr 400px;flex:1;overflow:hidden}
+@media(max-width:1120px){.editor-wrap{grid-template-columns:1fr}}
+.form-scroll{overflow-y:auto;flex:1;padding:20px 24px 0}
+.form-scroll::-webkit-scrollbar{width:4px}
+.form-scroll::-webkit-scrollbar-thumb{background:#1E293B;border-radius:2px}
+
+/* Cards */
+.card{background:#0F1F35;border:1px solid #1E3A5F;border-radius:11px;margin-bottom:12px;overflow:hidden}
+.card-hd{padding:11px 14px;display:flex;align-items:center;gap:9px;cursor:pointer;user-select:none;transition:background .12s}
+.card-hd:hover{background:#162032}
+.ci{width:25px;height:25px;border-radius:6px;display:grid;place-items:center;flex-shrink:0}
+.card-title{font-size:13px;font-weight:600;color:#94A3B8;flex:1}
+.chev{color:#334155;transition:transform .18s;flex-shrink:0}
+.chev.open{transform:rotate(180deg)}
+.card-body{padding:13px 14px 15px;border-top:1px solid #1E293B}
+
+/* Form Fields */
+.fg{display:grid;gap:9px}
+.fg.c2{grid-template-columns:1fr 1fr}
+.fg.c3{grid-template-columns:1fr 1fr 1fr}
+.fg.c4{grid-template-columns:1fr 1fr 1fr auto}
+@media(max-width:580px){.fg.c2,.fg.c3,.fg.c4{grid-template-columns:1fr}}
+.f{display:flex;flex-direction:column;gap:4px}
+.f label{font-size:10px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.09em}
+.f input,.f select,.f textarea{background:#070E1A;border:1px solid #1E293B;border-radius:7px;padding:8px 10px;font-size:13px;color:#E2E8F0;font-family:inherit;outline:none;width:100%;transition:border-color .14s,box-shadow .14s}
+.f input:focus,.f select:focus,.f textarea:focus{border-color:#3B82F6;box-shadow:0 0 0 3px rgba(59,130,246,.1)}
+.f textarea{resize:vertical;min-height:60px;line-height:1.5}
+.f select option{background:#0F172A}
+.f.err input,.f.err select{border-color:#EF4444!important}
+.err-msg{font-size:11px;color:#F87171;display:none;margin-top:2px}
+.f.err .err-msg{display:block}
+
+/* Status pills */
+.pills{display:flex;gap:6px;flex-wrap:wrap}
+.pill{padding:5px 11px;border-radius:20px;font-size:11px;font-weight:600;border:1.5px solid;cursor:pointer;transition:all .13s;background:transparent}
+.pill.paid   {border-color:#10B981;color:#10B981}
+.pill.pending{border-color:#F59E0B;color:#F59E0B}
+.pill.overdue{border-color:#EF4444;color:#EF4444}
+.pill.active.paid   {background:#10B981;color:#fff}
+.pill.active.pending{background:#F59E0B;color:#fff}
+.pill.active.overdue{background:#EF4444;color:#fff}
+
+/* Line Items */
+.items-list{display:flex;flex-direction:column;gap:7px}
+.item{background:#070E1A;border:1px solid #1E293B;border-radius:8px;padding:10px 10px 10px 12px;position:relative;transition:border-color .12s}
+.item.drag-over{border-color:#3B82F6;background:#0D1E34}
+.item:hover{border-color:#2D4E7A}
+.item-drag-handle{position:absolute;left:3px;top:50%;transform:translateY(-50%);color:#334155;cursor:grab;padding:4px 2px;line-height:0}
+.item-drag-handle:active{cursor:grabbing}
+.item-del{position:absolute;top:8px;right:8px;background:none;border:none;color:#334155;cursor:pointer;padding:3px;border-radius:4px;transition:color .12s;line-height:0}
+.item-del:hover{color:#EF4444}
+.item-body{padding-left:14px}
+.item-grid{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:7px;margin-top:7px;align-items:end}
+@media(max-width:500px){.item-grid{grid-template-columns:1fr 1fr}}
+.amt-box{background:#070E1A;border:1px solid #1E293B;border-radius:7px;padding:8px 10px;font-size:12px;font-family:'Fira Code',monospace;color:#60A5FA;font-weight:600;white-space:nowrap;min-height:36px;display:flex;align-items:center}
+.add-item-btn{width:100%;padding:8px;border:1.5px dashed #1E3A5F;border-radius:7px;background:transparent;color:#475569;font-size:12px;cursor:pointer;transition:all .13s;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:5px;margin-top:6px}
+.add-item-btn:hover{border-color:#3B82F6;color:#60A5FA;background:rgba(59,130,246,.05)}
+
+/* Totals */
+.totals{background:#070E1A;border:1px solid #1E293B;border-radius:9px;padding:12px;margin-top:12px}
+.tot-r{display:flex;justify-content:space-between;align-items:center;padding:3px 0;font-size:13px}
+.tot-r span:first-child{color:#475569}
+.tot-r span:last-child{font-family:'Fira Code',monospace;font-weight:500;color:#94A3B8}
+.tot-r.grand{border-top:1px solid #1E293B;margin-top:7px;padding-top:9px}
+.tot-r.grand span{color:#F1F5F9;font-size:15px;font-weight:800}
+.tot-r.grand span:last-child{color:#60A5FA}
+
+/* Autocomplete */
+.ac-wrap{position:relative}
+.ac-list{position:absolute;top:calc(100%+3px);left:0;right:0;background:#0F1F35;border:1px solid #3B82F6;border-radius:8px;max-height:160px;overflow-y:auto;z-index:200;display:none;box-shadow:0 8px 32px rgba(0,0,0,.5)}
+.ac-list.open{display:block}
+.ac-item{padding:8px 11px;font-size:13px;cursor:pointer;transition:background .1s;display:flex;flex-direction:column;gap:1px}
+.ac-item:hover{background:#162032}
+.ac-item strong{color:#F1F5F9}
+.ac-item span{color:#475569;font-size:11px}
+
+/* Preview panel */
+.preview-pane{background:#162032;border-left:1px solid #1E293B;display:flex;flex-direction:column;position:sticky;top:54px;height:calc(100vh - 54px)}
+.preview-pane-hd{padding:10px 14px;border-bottom:1px solid #1E293B;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.preview-pane-hd h3{font-size:10px;font-weight:700;color:#334155;text-transform:uppercase;letter-spacing:.12em}
+.preview-pane-btns{display:flex;gap:6px}
+.preview-area{flex:1;overflow:hidden;position:relative}
+.preview-area iframe{width:100%;height:100%;border:none}
+.preview-ph{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:9px;color:#334155;font-size:12px}
+.preview-ph svg{opacity:.2}
+@media(max-width:1120px){.preview-pane{display:none}}
+@media(max-width:1120px){#mob-preview-btn{display:flex!important}}
+@media(min-width:1121px){#mob-preview-overlay{display:none!important}}
+
+/* Action bar */
+.action-bar{display:flex;gap:8px;padding:12px 24px;border-top:1px solid #1E293B;background:#070E1A;flex-wrap:wrap;flex-shrink:0}
+.action-bar-r{margin-left:auto;display:flex;gap:8px}
+
+/* ════ HISTORY ════ */
+.hist-filters{display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+.search-wrap{flex:1;min-width:160px;position:relative}
+.search-wrap input{width:100%;background:#0F1F35;border:1px solid #1E3A5F;border-radius:7px;padding:8px 11px 8px 32px;font-size:13px;color:#E2E8F0;outline:none;transition:border-color .13s}
+.search-wrap input:focus{border-color:#3B82F6}
+.search-wrap svg{position:absolute;left:9px;top:50%;transform:translateY(-50%);color:#334155;pointer-events:none}
+.filt-row{display:flex;gap:5px;flex-wrap:wrap}
+.filt-btn{background:#0F1F35;border:1px solid #1E3A5F;border-radius:7px;color:#64748B;padding:7px 12px;font-size:11px;font-weight:600;cursor:pointer;transition:all .12s}
+.filt-btn:hover,.filt-btn.on{border-color:#3B82F6;color:#60A5FA;background:rgba(59,130,246,.08)}
+.bulk-bar{background:#0F1F35;border:1px solid #1E3A5F;border-radius:9px;padding:10px 14px;display:flex;align-items:center;gap:10px;margin-bottom:10px;display:none}
+.bulk-bar.visible{display:flex}
+.bulk-info{font-size:13px;font-weight:600;color:#60A5FA}
+.bulk-actions{display:flex;gap:6px;margin-left:auto}
+/* Checkbox */
+.cb{width:15px;height:15px;accent-color:#3B82F6;cursor:pointer;flex-shrink:0}
+.itbl-hd .cb-col,.itbl-row .cb-col{width:32px;flex-shrink:0}
+
+/* ════ CLIENTS ════ */
+.client-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;margin-top:14px}
+.client-card{background:#0F1F35;border:1px solid #1E3A5F;border-radius:11px;padding:15px;transition:border-color .13s}
+.client-card:hover{border-color:#2D4E7A}
+.cc-name{font-size:14px;font-weight:700;color:#F1F5F9;margin-bottom:7px}
+.cc-row{font-size:12px;color:#475569;display:flex;align-items:center;gap:5px;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cc-row svg{flex-shrink:0;opacity:.6}
+.cc-btns{display:flex;gap:6px;margin-top:11px}
+
+/* ════ SETTINGS ════ */
+.settings-grid{display:grid;grid-template-columns:220px 1fr;gap:16px}
+@media(max-width:800px){.settings-grid{grid-template-columns:1fr}}
+.settings-nav{display:flex;flex-direction:column;gap:3px}
+.sn-btn{padding:9px 12px;border-radius:8px;font-size:13px;font-weight:500;color:#64748B;cursor:pointer;border:none;background:none;width:100%;text-align:left;transition:all .12s;display:flex;align-items:center;gap:8px}
+.sn-btn:hover{background:#0F1F35;color:#CBD5E1}
+.sn-btn.on{background:rgba(59,130,246,.1);color:#60A5FA}
+.sn-btn svg{width:15px;height:15px;flex-shrink:0}
+.settings-panel{background:#0F1F35;border:1px solid #1E3A5F;border-radius:12px;padding:20px}
+.settings-section{display:none}
+.settings-section.on{display:block}
+.stitle{font-size:14px;font-weight:700;color:#F1F5F9;margin-bottom:4px}
+.ssub{font-size:12px;color:#475569;margin-bottom:18px}
+.tpl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-top:14px}
+.tpl-card{background:#070E1A;border:1px solid #1E293B;border-radius:9px;padding:14px;cursor:pointer;transition:all .13s}
+.tpl-card:hover{border-color:#3B82F6;background:#0D1E34}
+.tpl-name{font-size:13px;font-weight:600;color:#F1F5F9;margin-bottom:5px}
+.tpl-items{font-size:11px;color:#475569}
+.danger-zone{border:1px solid rgba(239,68,68,.2);border-radius:9px;padding:16px;margin-top:16px}
+.danger-zone-title{font-size:12px;font-weight:700;color:#EF4444;text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px}
+
+/* Buttons */
+.btn{padding:8px 16px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;border:none;font-family:inherit;transition:all .16s;display:inline-flex;align-items:center;gap:6px}
+.btn-primary{background:linear-gradient(135deg,#3B82F6,#2563EB);color:#fff;box-shadow:0 2px 8px rgba(59,130,246,.25)}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(59,130,246,.35)}
+.btn-primary:active{transform:none}
+.btn-success{background:linear-gradient(135deg,#10B981,#059669);color:#fff}
+.btn-success:hover{transform:translateY(-1px);box-shadow:0 5px 15px rgba(16,185,129,.3)}
+.btn-ghost{background:#0F1F35;border:1px solid #1E3A5F;color:#94A3B8}
+.btn-ghost:hover{border-color:#2D4E7A;color:#F1F5F9}
+.btn-danger{background:#0F1F35;border:1px solid rgba(239,68,68,.3);color:#F87171}
+.btn-danger:hover{background:rgba(239,68,68,.1);border-color:#EF4444}
+.btn-sm{padding:5px 11px;font-size:12px;border-radius:6px}
+.btn-xs{padding:4px 9px;font-size:11px;border-radius:5px}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none!important;box-shadow:none!important}
+.spin{width:13px;height:13px;border:2px solid rgba(255,255,255,.25);border-top-color:#fff;border-radius:50%;animation:rot .65s linear infinite;display:none;flex-shrink:0}
+.loading .spin{display:block}
+.loading .lbl{display:none}
+@keyframes rot{to{transform:rotate(360deg)}}
+
+/* Modal */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:300;display:none;place-items:center;padding:16px}
+.modal-bg.open{display:grid}
+.modal{background:#0F1F35;border:1px solid #1E3A5F;border-radius:14px;padding:22px;width:100%;max-width:420px;position:relative;max-height:90vh;overflow-y:auto}
+.modal h3{font-size:15px;font-weight:700;color:#F1F5F9;margin-bottom:16px}
+.modal-close{position:absolute;top:13px;right:13px;background:none;border:none;color:#475569;cursor:pointer;line-height:0;padding:3px;border-radius:4px;transition:color .12s}
+.modal-close:hover{color:#F1F5F9}
+.modal-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:18px}
+.modal-divider{height:1px;background:#1E293B;margin:14px 0}
+
+/* Toast */
+.toast{position:fixed;bottom:20px;right:20px;background:#0F1F35;border:1px solid #1E3A5F;border-radius:9px;padding:10px 15px;font-size:13px;color:#F1F5F9;display:flex;align-items:center;gap:8px;box-shadow:0 16px 48px rgba(0,0,0,.6);transform:translateY(80px);opacity:0;transition:all .28s;z-index:999;max-width:280px}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.ok{border-color:#10B981}
+.toast.err{border-color:#EF4444}
+.toast.info{border-color:#3B82F6}
+
+/* Misc */
+.kbd{font-size:10px;background:#070E1A;border:1px solid #1E3A5F;border-radius:4px;padding:2px 6px;color:#475569;font-family:'Fira Code',monospace}
+.divider{height:1px;background:#1E293B;margin:12px 0}
+.text-muted{color:#475569}
+.text-sm{font-size:12px}
+.gap-2{gap:8px}
+.ml-auto{margin-left:auto}
+.mt-2{margin-top:8px}
+.w-full{width:100%}
+.flex{display:flex}
+.items-center{align-items:center}
+.justify-between{justify-content:space-between}
+</style>
+{%- endraw %}
+</head>
+<body>
+<div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+<div class="shell">
+
+<!-- ══════════════ SIDEBAR ══════════════ -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">
+      <svg width="17" height="17" fill="none" stroke="#fff" stroke-width="2.2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-3-3v6M3 7l1-1h16l1 1v12l-1 1H4l-1-1V7z"/>
+      </svg>
+    </div>
+    <span class="logo-text">Invoice<span>Forge</span></span>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">
+      <div class="nav-label">Main</div>
+      <button class="nav-btn active" data-view="dashboard" onclick="go('dashboard')">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+        Dashboard
+      </button>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Invoices</div>
+      <button class="nav-btn" onclick="newInvoice()">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+        New Invoice
+      </button>
+      <button class="nav-btn" data-view="history" onclick="go('history')">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2"/></svg>
+        All Invoices
+        <span class="nav-count" id="inv-badge" style="display:none">0</span>
+      </button>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Tools</div>
+      <button class="nav-btn" data-view="clients" onclick="go('clients')">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+        Clients
+      </button>
+      <button class="nav-btn" data-view="settings" onclick="go('settings')">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+        Settings
+      </button>
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <button class="nav-btn" onclick="exportCSV()">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+      Export CSV
+    </button>
+    <button class="nav-btn" onclick="openShortcuts()">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M8 14h8"/></svg>
+      Shortcuts
+    </button>
+  </div>
+</aside>
+
+<!-- ══════════════ MAIN ══════════════ -->
+<div class="main" id="main">
+  <div class="topbar">
+    <button class="menu-btn" onclick="toggleSidebar()">
+      <svg width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+    </button>
+    <span class="topbar-title" id="topbar-title">Dashboard</span>
+    <div class="topbar-right">
+      <button class="btn btn-primary btn-sm" onclick="newInvoice()">
+        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+        New Invoice
+      </button>
+    </div>
+  </div>
+
+  <!-- ══ DASHBOARD ══ -->
+  <div class="view active" id="view-dashboard">
+    <div class="pg">
+      <div class="pg-header">
+        <div class="pg-title">Dashboard</div>
+        <div class="pg-sub">Your invoice overview at a glance</div>
+      </div>
+      <div class="stats-row">
+        <div class="sc blue"><div class="sc-label">Total Invoices</div><div class="sc-val" id="ds-total">—</div><div class="sc-sub">all time</div></div>
+        <div class="sc green"><div class="sc-label">Total Revenue</div><div class="sc-val" id="ds-rev">—</div><div class="sc-sub" id="ds-paid-c">0 paid</div></div>
+        <div class="sc amber"><div class="sc-label">Pending</div><div class="sc-val" id="ds-pend">—</div><div class="sc-sub" id="ds-pend-r">$0</div></div>
+        <div class="sc red"><div class="sc-label">Overdue</div><div class="sc-val" id="ds-over">—</div><div class="sc-sub" id="ds-over-r">$0</div></div>
+      </div>
+      <div class="dash-grid">
+        <div>
+          <div class="section-hd">
+            <span class="section-title">Revenue (Last 6 Months)</span>
+          </div>
+          <div class="chart-wrap">
+            <div class="chart-legend">
+              <div class="chart-leg-item"><div class="chart-leg-dot" style="background:#3B82F6"></div>Total</div>
+              <div class="chart-leg-item"><div class="chart-leg-dot" style="background:#10B981"></div>Paid</div>
+            </div>
+            <div class="chart-canvas-wrap">
+              <div class="chart-bars" id="chart-bars">
+                <div class="empty text-muted text-sm" style="margin:auto">No invoice data yet</div>
+              </div>
+            </div>
+          </div>
+          <div class="section-hd" style="margin-top:20px">
+            <span class="section-title">Recent Invoices</span>
+            <a href="#" onclick="go('history')" style="font-size:12px;color:#3B82F6;text-decoration:none">View all →</a>
+          </div>
+          <div id="dash-recent"></div>
+        </div>
+        <div>
+          <div class="section-hd"><span class="section-title">Quick Stats</span></div>
+          <div class="quick-panel">
+            <div class="qp-row"><span class="qp-label">Collection Rate</span><span class="qp-val" id="qs-rate">—</span></div>
+            <div class="qp-row"><span class="qp-label">Avg Invoice Value</span><span class="qp-val" id="qs-avg">—</span></div>
+            <div class="qp-row"><span class="qp-label">Paid Revenue</span><span class="qp-val" id="qs-paid">—</span></div>
+            <div class="qp-row"><span class="qp-label">Outstanding</span><span class="qp-val" id="qs-out">—</span></div>
+            <div class="qp-row"><span class="qp-label">Total Clients</span><span class="qp-val" id="qs-clients">—</span></div>
+            <button class="btn btn-ghost w-full" style="margin-top:4px" onclick="markOverdue()">
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+              Auto-mark Overdue
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ EDITOR ══ -->
+  <div class="view" id="view-editor">
+    <div class="editor-wrap">
+      <div class="form-scroll" id="form-scroll">
+
+        <!-- Invoice Details -->
+        <div class="card">
+          <div class="card-hd" onclick="tc('inv')">
+            <div class="ci" style="background:rgba(59,130,246,.12)"><svg width="13" height="13" fill="none" stroke="#60A5FA" stroke-width="2" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 7h6M9 11h6M9 15h4"/></svg></div>
+            <span class="card-title">Invoice Details</span>
+            <svg class="chev open" id="chev-inv" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
+          </div>
+          <div class="card-body" id="body-inv">
+            <div class="fg c3">
+              <div class="f" id="f-num"><label>Invoice #</label><input id="inv-num" value="INV-001" oninput="dirty();sp()"/><span class="err-msg">Required</span></div>
+              <div class="f"><label>Issue Date</label><input id="inv-date" type="date" oninput="dirty();sp()"/></div>
+              <div class="f"><label>Due Date</label><input id="inv-due" type="date" oninput="dirty();sp()"/></div>
+            </div>
+            <div class="fg c2 mt-2">
+              <div class="f"><label>Currency</label>
+                <select id="inv-cur" onchange="updateSym();dirty();sp()">
+                  <option value="USD">USD — US Dollar ($)</option>
+                  <option value="EUR">EUR — Euro (€)</option>
+                  <option value="GBP">GBP — Pound (£)</option>
+                  <option value="INR">INR — Rupee (₹)</option>
+                  <option value="JPY">JPY — Yen (¥)</option>
+                  <option value="CAD">CAD — Canadian ($)</option>
+                  <option value="AUD">AUD — Australian ($)</option>
+                  <option value="SGD">SGD — Singapore ($)</option>
+                  <option value="AED">AED — Dirham (د.إ)</option>
+                </select>
+              </div>
+              <div class="f"><label>Status</label>
+                <div class="pills" id="pill-wrap">
+                  <button class="pill pending active" onclick="setSt('pending')">Pending</button>
+                  <button class="pill paid" onclick="setSt('paid')">Paid</button>
+                  <button class="pill overdue" onclick="setSt('overdue')">Overdue</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Company -->
+        <div class="card">
+          <div class="card-hd" onclick="tc('co')">
+            <div class="ci" style="background:rgba(139,92,246,.12)"><svg width="13" height="13" fill="none" stroke="#A78BFA" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
+            <span class="card-title">Your Company</span>
+            <svg class="chev" id="chev-co" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
+          </div>
+          <div class="card-body" id="body-co" style="display:none">
+            <div class="fg c2">
+              <div class="f"><label>Company Name</label><input id="co-name" placeholder="Pixel Studio Co." oninput="dirty();sp()"/></div>
+              <div class="f"><label>Tagline</label><input id="co-tag" placeholder="Design · Development" oninput="dirty();sp()"/></div>
+              <div class="f"><label>Email</label><input id="co-email" type="email" placeholder="hello@company.com" oninput="dirty();sp()"/></div>
+              <div class="f"><label>Phone</label><input id="co-phone" placeholder="+1 555 0100" oninput="dirty();sp()"/></div>
+              <div class="f"><label>Website</label><input id="co-web" placeholder="www.company.com" oninput="dirty();sp()"/></div>
+              <div class="f"><label>Address</label><input id="co-addr" placeholder="123 Main St, City, State" oninput="dirty();sp()"/></div>
+            </div>
+            <div class="mt-2" style="text-align:right">
+              <button class="btn btn-ghost btn-sm" onclick="saveCoDefaults()">
+                <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>
+                Save as Default
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Client -->
+        <div class="card">
+          <div class="card-hd" onclick="tc('cl')">
+            <div class="ci" style="background:rgba(16,185,129,.12)"><svg width="13" height="13" fill="none" stroke="#34D399" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+            <span class="card-title">Bill To (Client)</span>
+            <svg class="chev" id="chev-cl" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
+          </div>
+          <div class="card-body" id="body-cl" style="display:none">
+            <div class="fg c2">
+              <div class="f ac-wrap" style="grid-column:span 2">
+                <label>Client Name</label>
+                <input id="cl-name" placeholder="Search or type client name…" oninput="dirty();acSearch();sp()" autocomplete="off"/>
+                <div class="ac-list" id="ac-list"></div>
+              </div>
+              <div class="f"><label>Email</label><input id="cl-email" type="email" placeholder="client@company.com" oninput="dirty();sp()"/></div>
+              <div class="f"><label>Phone</label><input id="cl-phone" placeholder="+1 555 1234" oninput="dirty();sp()"/></div>
+              <div class="f" style="grid-column:span 2"><label>Address</label><input id="cl-addr" placeholder="Client billing address" oninput="dirty();sp()"/></div>
+            </div>
+            <div class="mt-2" style="text-align:right">
+              <button class="btn btn-ghost btn-sm" onclick="saveClToBook()">Save to Address Book</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Line Items -->
+        <div class="card">
+          <div class="card-hd" onclick="tc('it')">
+            <div class="ci" style="background:rgba(245,158,11,.12)"><svg width="13" height="13" fill="none" stroke="#FCD34D" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2"/></svg></div>
+            <span class="card-title">Line Items</span>
+            <svg class="chev open" id="chev-it" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
+          </div>
+          <div class="card-body" id="body-it">
+            <div class="items-list" id="items-list"></div>
+            <button class="add-item-btn" onclick="addItem()">
+              <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+              Add Line Item <span style="font-size:10px;color:#334155;margin-left:4px">Ctrl+Enter</span>
+            </button>
+            <div class="totals">
+              <div class="tot-r"><span>Subtotal</span><span id="t-sub">$0.00</span></div>
+              <div class="tot-r"><span>Tax</span><span id="t-tax">$0.00</span></div>
+              <div class="tot-r"><span>Discount (<span id="t-dpct">0</span>%)</span><span id="t-disc">−$0.00</span></div>
+              <div class="tot-r grand"><span>Total Due</span><span id="t-grand">$0.00</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Notes & Settings -->
+        <div class="card" style="margin-bottom:0">
+          <div class="card-hd" onclick="tc('nt')">
+            <div class="ci" style="background:rgba(99,102,241,.12)"><svg width="13" height="13" fill="none" stroke="#818CF8" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4z"/></svg></div>
+            <span class="card-title">Notes & Options</span>
+            <svg class="chev" id="chev-nt" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
+          </div>
+          <div class="card-body" id="body-nt" style="display:none">
+            <div class="fg">
+              <div class="fg c2">
+                <div class="f"><label>Discount (%)</label><input id="inv-disc" type="number" min="0" max="100" step="0.5" value="0" oninput="recalc();dirty();sp()"/></div>
+                <div class="f"><label>Payment Terms</label><input id="inv-terms" placeholder="Net 30" oninput="dirty();sp()"/></div>
+              </div>
+              <div class="f"><label>Notes / Memo</label><textarea id="inv-notes" placeholder="Thank you for your business!…" oninput="dirty();sp()"></textarea></div>
+              <div class="f"><label>Bank / Payment Details</label><textarea id="inv-bank" placeholder="Bank name, routing #, account #, payment link…" oninput="dirty();sp()"></textarea></div>
+            </div>
+          </div>
+        </div>
+        <div style="height:20px"></div>
+      </div><!-- /form-scroll -->
+
+      <!-- Preview -->
+      <div class="preview-pane">
+        <div class="preview-pane-hd">
+          <h3>Live Preview</h3>
+          <div class="preview-pane-btns">
+            <button class="btn btn-ghost btn-sm" onclick="printPDF()" title="Ctrl+P">
+              <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+            </button>
+            <button class="btn btn-ghost btn-sm" onclick="refreshPreview()">↺</button>
+          </div>
+        </div>
+        <div class="preview-area">
+          <div class="preview-ph" id="preview-ph">
+            <svg width="44" height="44" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M9 12h6m-3-3v6M3 7l1-1h16l1 1v12l-1 1H4l-1-1V7z"/></svg>
+            <p>Fill in details to preview</p>
+          </div>
+          <iframe id="preview-fr" style="display:none;width:100%;height:100%;border:none"></iframe>
+        </div>
+      </div>
+    </div><!-- /editor-wrap -->
+
+    <!-- Action bar -->
+    <div class="action-bar">
+      <button class="btn btn-ghost btn-sm" id="mob-preview-btn" onclick="toggleMobilePreview()" style="display:none" title="Toggle preview">
+        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        Preview
+      </button>
+      <button class="btn btn-ghost btn-sm" onclick="loadSample()">
+        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4v16h16V8l-4-4H4z"/></svg>
+        Sample
+      </button>
+      <button class="btn btn-ghost btn-sm" onclick="openTemplates()">
+        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+        Templates
+      </button>
+      <button class="btn btn-ghost btn-sm" onclick="exportJSON()">
+        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+        JSON
+      </button>
+      <div class="action-bar-r">
+        <button class="btn btn-ghost btn-sm" id="save-btn" onclick="saveInv()">
+          <div class="spin"></div><span class="lbl">
+            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>
+            Save
+          </span>
+        </button>
+        <button class="btn btn-primary btn-sm" id="dl-btn" onclick="dlPDF()">
+          <div class="spin"></div><span class="lbl">
+            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+            Download PDF
+          </span>
+        </button>
+      </div>
+    </div>
+  <!-- Mobile Preview Overlay -->
+  <div id="mob-preview-overlay" style="display:none;position:fixed;inset:0;background:#162032;z-index:100;flex-direction:column">
+    <div style="padding:10px 14px;border-bottom:1px solid #1E293B;display:flex;align-items:center;justify-content:space-between;background:#070E1A">
+      <span style="font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.1em">Preview</span>
+      <button onclick="toggleMobilePreview()" style="background:none;border:none;color:#64748B;cursor:pointer;font-size:20px;line-height:1;padding:4px">×</button>
+    </div>
+    <iframe id="mob-preview-fr" style="flex:1;border:none;width:100%;height:100%"></iframe>
+    <div style="padding:10px 14px;border-top:1px solid #1E293B;background:#070E1A;display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-ghost btn-sm" onclick="toggleMobilePreview()">Close</button>
+      <button class="btn btn-primary btn-sm" onclick="dlPDF()">Download PDF</button>
+    </div>
+  </div>
+  </div><!-- /view-editor -->
+
+  <!-- ══ HISTORY ══ -->
+  <div class="view" id="view-history">
+    <div class="pg">
+      <div class="pg-header flex items-center justify-between">
+        <div><div class="pg-title">All Invoices</div><div class="pg-sub" id="hist-count">Loading…</div></div>
+        <div class="flex gap-2">
+          <button class="btn btn-ghost btn-sm" onclick="exportCSV()">Export CSV</button>
+          <button class="btn btn-primary btn-sm" onclick="newInvoice()">+ New</button>
+        </div>
+      </div>
+      <div class="hist-filters">
+        <div class="search-wrap">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+          <input id="h-search" placeholder="Search by number or client…" oninput="loadHistory()"/>
+        </div>
+        <div class="filt-row">
+          <button class="filt-btn on" data-f="" onclick="setFilter(this,'')">All</button>
+          <button class="filt-btn" data-f="paid" onclick="setFilter(this,'paid')">Paid</button>
+          <button class="filt-btn" data-f="pending" onclick="setFilter(this,'pending')">Pending</button>
+          <button class="filt-btn" data-f="overdue" onclick="setFilter(this,'overdue')">Overdue</button>
+        </div>
+      </div>
+      <!-- Bulk bar -->
+      <div class="bulk-bar" id="bulk-bar">
+        <span class="bulk-info" id="bulk-info">0 selected</span>
+        <div class="bulk-actions">
+          <button class="btn btn-ghost btn-xs" onclick="bulkStatus('paid')">Mark Paid</button>
+          <button class="btn btn-ghost btn-xs" onclick="bulkStatus('pending')">Mark Pending</button>
+          <button class="btn btn-ghost btn-xs" onclick="bulkStatus('overdue')">Mark Overdue</button>
+          <button class="btn btn-danger btn-xs" onclick="bulkDelete()">Delete Selected</button>
+        </div>
+        <button class="btn btn-ghost btn-xs ml-auto" onclick="clearSel()">✕ Clear</button>
+      </div>
+      <!-- Table -->
+      <div class="itbl">
+        <div class="itbl-hd">
+          <div class="cb-col"><input type="checkbox" class="cb" id="cb-all" onchange="toggleAll(this)"/></div>
+          <span>Invoice #</span><span>Client</span><span>Date</span><span>Status</span><span>Amount</span><span>Actions</span>
+        </div>
+        <div id="hist-rows"><div class="empty"><p>Loading…</p></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ CLIENTS ══ -->
+  <div class="view" id="view-clients">
+    <div class="pg">
+      <div class="pg-header flex items-center justify-between">
+        <div><div class="pg-title">Client Address Book</div><div class="pg-sub">Manage your clients and auto-fill invoices</div></div>
+        <button class="btn btn-primary btn-sm" onclick="openClientModal()">+ Add Client</button>
+      </div>
+      <div class="hist-filters">
+        <div class="search-wrap">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+          <input id="cl-search" placeholder="Search clients…" oninput="loadClients()"/>
+        </div>
+      </div>
+      <div class="client-grid" id="client-grid"><div class="empty"><p>Loading…</p></div></div>
+    </div>
+  </div>
+
+  <!-- ══ SETTINGS ══ -->
+  <div class="view" id="view-settings">
+    <div class="pg">
+      <div class="pg-header"><div class="pg-title">Settings</div><div class="pg-sub">Configure defaults and manage your data</div></div>
+      <div class="settings-grid">
+        <div class="settings-nav">
+          <button class="sn-btn on" data-sp="company" onclick="showSP('company',this)">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+            Company Defaults
+          </button>
+          <button class="sn-btn" data-sp="templates" onclick="showSP('templates',this)">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/></svg>
+            Invoice Templates
+          </button>
+          <button class="sn-btn" data-sp="numbering" onclick="showSP('numbering',this)">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 7h1l2 7h1M9 11h4"/><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+            Numbering
+          </button>
+          <button class="sn-btn" data-sp="data" onclick="showSP('data',this)">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+            Data & Export
+          </button>
+        </div>
+        <div class="settings-panel">
+          <!-- Company Defaults -->
+          <div class="settings-section on" id="sp-company">
+            <div class="stitle">Company Defaults</div>
+            <div class="ssub">These are pre-filled on every new invoice.</div>
+            <div class="fg c2">
+              <div class="f"><label>Company Name</label><input id="s-co-name" placeholder="Pixel Studio Co."/></div>
+              <div class="f"><label>Tagline</label><input id="s-co-tag" placeholder="Design · Development"/></div>
+              <div class="f"><label>Email</label><input id="s-co-email" type="email"/></div>
+              <div class="f"><label>Phone</label><input id="s-co-phone"/></div>
+              <div class="f"><label>Website</label><input id="s-co-web"/></div>
+              <div class="f"><label>Address</label><input id="s-co-addr"/></div>
+            </div>
+            <div style="margin-top:14px">
+              <button class="btn btn-primary" onclick="saveSettings()">Save Company Defaults</button>
+            </div>
+          </div>
+          <!-- Templates -->
+          <div class="settings-section" id="sp-templates">
+            <div class="stitle">Invoice Templates</div>
+            <div class="ssub">Start a new invoice from a pre-built template.</div>
+            <div class="tpl-grid" id="tpl-grid"><div class="empty text-sm text-muted">Loading…</div></div>
+          </div>
+          <!-- Numbering -->
+          <div class="settings-section" id="sp-numbering">
+            <div class="stitle">Invoice Numbering</div>
+            <div class="ssub">Customize how invoice numbers are generated.</div>
+            <div class="fg" style="max-width:300px">
+              <div class="f"><label>Prefix</label><input id="s-prefix" value="INV" placeholder="INV"/></div>
+              <div class="f"><label>Preview</label><div style="background:#070E1A;border:1px solid #1E293B;border-radius:7px;padding:8px 10px;font-size:13px;color:#60A5FA;font-family:'Fira Code',monospace" id="num-preview">INV-2024-001</div></div>
+            </div>
+            <div class="mt-2">
+              <button class="btn btn-primary" onclick="saveNumSettings()">Save Numbering</button>
+            </div>
+          </div>
+          <!-- Data -->
+          <div class="settings-section" id="sp-data">
+            <div class="stitle">Data & Export</div>
+            <div class="ssub">Export or manage all your invoice data.</div>
+            <div class="flex gap-2" style="flex-wrap:wrap">
+              <button class="btn btn-ghost" onclick="exportCSV()">
+                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                Export all as CSV
+              </button>
+              <button class="btn btn-ghost" onclick="exportAllJSON()">
+                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                Export all as JSON
+              </button>
+            </div>
+            <div class="danger-zone" style="margin-top:20px">
+              <div class="danger-zone-title">⚠ Danger Zone</div>
+              <p class="text-sm text-muted" style="margin-bottom:12px">These actions cannot be undone.</p>
+              <button class="btn btn-danger btn-sm" onclick="confirmDeleteAll()">Delete All Invoices</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+</div><!-- /shell -->
+
+<!-- ── Modals ── -->
+<!-- Client modal -->
+<div class="modal-bg" id="modal-client">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modal-client')"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    <h3 id="mc-title">Add Client</h3>
+    <div class="fg">
+      <div class="f"><label>Name *</label><input id="mc-name" placeholder="Company or person"/></div>
+      <div class="fg c2">
+        <div class="f"><label>Email</label><input id="mc-email" type="email"/></div>
+        <div class="f"><label>Phone</label><input id="mc-phone"/></div>
+      </div>
+      <div class="f"><label>Address</label><input id="mc-addr"/></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-client')">Cancel</button>
+      <button class="btn btn-primary" onclick="submitClient()">Save Client</button>
+    </div>
+    <input type="hidden" id="mc-id"/>
+  </div>
+</div>
+
+<!-- Templates modal -->
+<div class="modal-bg" id="modal-tpl">
+  <div class="modal" style="max-width:520px">
+    <button class="modal-close" onclick="closeModal('modal-tpl')"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    <h3>Choose a Template</h3>
+    <p class="text-sm text-muted" style="margin-bottom:14px">Selecting a template fills line items and payment terms.</p>
+    <div class="tpl-grid" id="tpl-modal-grid"></div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-tpl')">Cancel</button></div>
+  </div>
+</div>
+
+<!-- Shortcuts modal -->
+<div class="modal-bg" id="modal-kb">
+  <div class="modal" style="max-width:380px">
+    <button class="modal-close" onclick="closeModal('modal-kb')"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    <h3>Keyboard Shortcuts</h3>
+    <div style="display:grid;gap:9px">
+      <div class="flex items-center gap-2"><kbd class="kbd">Ctrl+N</kbd><span class="text-sm text-muted">New invoice</span></div>
+      <div class="flex items-center gap-2"><kbd class="kbd">Ctrl+S</kbd><span class="text-sm text-muted">Save invoice</span></div>
+      <div class="flex items-center gap-2"><kbd class="kbd">Ctrl+D</kbd><span class="text-sm text-muted">Download PDF</span></div>
+      <div class="flex items-center gap-2"><kbd class="kbd">Ctrl+P</kbd><span class="text-sm text-muted">Print invoice</span></div>
+      <div class="flex items-center gap-2"><kbd class="kbd">Ctrl+Enter</kbd><span class="text-sm text-muted">Add line item</span></div>
+      <div class="flex items-center gap-2"><kbd class="kbd">Escape</kbd><span class="text-sm text-muted">Close modals</span></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-kb')">Close</button></div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"><span id="t-icon">✓</span><span id="t-msg">Done!</span></div>
+
+<!-- ══════════════════ SCRIPT ══════════════════ -->
+{%- raw %}
+<script>
+// ── State ────────────────────────────────────────────────────────
+let STATUS='pending', ITEM_ID=0, SYM='$', PT=null;
+let CURRENT_ID=null, IS_DIRTY=false, HIST_FILTER='', SELECTED=new Set();
+const SYMS={USD:'$',EUR:'€',GBP:'£',INR:'₹',JPY:'¥',CAD:'$',AUD:'$',SGD:'$',AED:'د.إ'};
+let NUM_PREFIX='INV';
+
+// ── Boot ─────────────────────────────────────────────────────────
+window.addEventListener('load',()=>{
+  setDates(); addItem(); loadSettings(); loadDashboard(); setupKb();
+  setTimeout(restoreDraft, 500); // restore after settings fill defaults
+  document.getElementById('s-prefix').addEventListener('input',updateNumPreview);
+});
+
+function setDates(){
+  const t=new Date(),d=new Date(t); d.setDate(d.getDate()+30);
+  sv('inv-date',iso(t)); sv('inv-due',iso(d));
+}
+const iso=d=>d.toISOString().split('T')[0];
+const dirty=()=>{IS_DIRTY=true; if(typeof autosaveDraft==='function') autosaveDraft();};
+
+// ── View switching ────────────────────────────────────────────────
+function go(name){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('view-'+name).classList.add('active');
+  document.querySelector(`[data-view="${name}"]`)?.classList.add('active');
+  const TITLES={dashboard:'Dashboard',editor:'Invoice Editor',history:'All Invoices',clients:'Client Address Book',settings:'Settings'};
+  document.getElementById('topbar-title').textContent=TITLES[name]||name;
+  if(name==='history'){loadHistory();}
+  if(name==='clients'){loadClients();}
+  if(name==='dashboard'){loadDashboard();}
+  if(name==='settings'){loadSettingsUI();loadTemplatesGrid('tpl-grid');}
+  closeSidebar();
+}
+
+// ── New Invoice ───────────────────────────────────────────────────
+function newInvoice(){
+  CURRENT_ID=null; IS_DIRTY=false;
+  resetForm(); fetchNextNum(); go('editor');
+}
+
+function resetForm(){
+  STATUS='pending'; setSt('pending',false);
+  ['inv-num','co-name','co-tag','co-email','co-phone','co-web','co-addr',
+   'cl-name','cl-email','cl-phone','cl-addr','inv-terms','inv-notes','inv-bank'].forEach(id=>{
+    const el=gid(id); if(el) el.value='';
+  });
+  sv('inv-disc','0'); sv('inv-cur','USD'); SYM='$'; setDates();
+  gid('items-list').innerHTML=''; ITEM_ID=0; addItem(); recalc();
+  gid('preview-ph').style.display='flex'; gid('preview-fr').style.display='none';
+}
+
+async function fetchNextNum(){
+  try{const r=await fetch('/api/next-number?prefix='+NUM_PREFIX);
+    const d=await r.json(); sv('inv-num',d.number);}catch(e){}
+}
+
+// ── Card toggle ───────────────────────────────────────────────────
+function tc(id){
+  const b=gid('body-'+id),c=gid('chev-'+id);
+  const open=b.style.display!=='none';
+  b.style.display=open?'none':'block'; c.classList.toggle('open',!open);
+}
+
+// ── Status ────────────────────────────────────────────────────────
+function setSt(s,mark=true){
+  STATUS=s; if(mark) dirty();
+  document.querySelectorAll('.pill').forEach(p=>p.classList.toggle('active',p.classList.contains(s)));
+}
+
+// ── Currency ──────────────────────────────────────────────────────
+function updateSym(){
+  SYM=SYMS[gid('inv-cur').value]||'$';
+  document.querySelectorAll('.isym').forEach(e=>e.textContent=SYM);
+  recalc();
+}
+
+// ── Line Items ────────────────────────────────────────────────────
+function addItem(data={}){
+  const id=++ITEM_ID;
+  const el=document.createElement('div');
+  el.className='item'; el.id='i-'+id;
+  el.setAttribute('draggable','true');
+  el.innerHTML=`
+    <div class="item-drag-handle" title="Drag to reorder">
+      <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="9" cy="5" r="1" fill="currentColor"/><circle cx="15" cy="5" r="1" fill="currentColor"/><circle cx="9" cy="12" r="1" fill="currentColor"/><circle cx="15" cy="12" r="1" fill="currentColor"/><circle cx="9" cy="19" r="1" fill="currentColor"/><circle cx="15" cy="19" r="1" fill="currentColor"/></svg>
+    </div>
+    <button class="item-del" onclick="delItem(${id})">
+      <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+    </button>
+    <div class="item-body">
+      <div class="f"><label>Description</label><input id="id-${id}" value="${esc(data.description||'')}" placeholder="Service or product description" oninput="dirty();sp()"/></div>
+      <div class="f mt-2"><label>Notes (optional)</label><input id="in-${id}" value="${esc(data.notes||'')}" placeholder="Additional details…" oninput="dirty();sp()"/></div>
+      <div class="item-grid">
+        <div class="f"><label>Qty</label><input id="iq-${id}" type="number" min="0" step="0.5" value="${data.quantity||1}" oninput="ci(${id});dirty();sp()"/></div>
+        <div class="f"><label>Unit Price</label><input id="ip-${id}" type="number" min="0" step="0.01" value="${data.unit_price||''}" placeholder="0.00" oninput="ci(${id});dirty();sp()"/></div>
+        <div class="f"><label>Tax %</label><input id="it-${id}" type="number" min="0" max="100" step="0.5" value="${data.tax_rate||0}" oninput="ci(${id});dirty();sp()"/></div>
+        <div class="f"><label>Amount</label><div class="amt-box"><span class="isym">${SYM}</span>&thinsp;<span id="ia-${id}">0.00</span></div></div>
+      </div>
+    </div>`;
+  // drag events
+  el.addEventListener('dragstart',e=>{e.dataTransfer.setData('text/plain',id); el.style.opacity='.4';});
+  el.addEventListener('dragend',()=>{el.style.opacity='1'; document.querySelectorAll('.item').forEach(x=>x.classList.remove('drag-over'));});
+  el.addEventListener('dragover',e=>{e.preventDefault(); el.classList.add('drag-over');});
+  el.addEventListener('dragleave',()=>el.classList.remove('drag-over'));
+  el.addEventListener('drop',e=>{
+    e.preventDefault(); el.classList.remove('drag-over');
+    const srcId=e.dataTransfer.getData('text/plain');
+    const src=gid('i-'+srcId);
+    if(src&&src!==el){
+      const list=gid('items-list');
+      const all=[...list.children];
+      const si=all.indexOf(src), ti=all.indexOf(el);
+      if(si<ti) list.insertBefore(src,el.nextSibling); else list.insertBefore(src,el);
+    }
+    sp();
+  });
+  gid('items-list').appendChild(el);
+  ci(id);
+}
+
+function delItem(id){gid('i-'+id)?.remove(); recalc(); dirty(); sp();}
+
+function ci(id){
+  const q=parseFloat(gid('iq-'+id)?.value)||0;
+  const p=parseFloat(gid('ip-'+id)?.value)||0;
+  const amt=gid('ia-'+id); if(amt) amt.textContent=fmt(q*p);
+  recalc();
+}
+
+function recalc(){
+  let sub=0,tax=0;
+  document.querySelectorAll('.item').forEach(row=>{
+    const id=+row.id.split('-')[1];
+    const q=parseFloat(gid('iq-'+id)?.value)||0;
+    const p=parseFloat(gid('ip-'+id)?.value)||0;
+    const t=parseFloat(gid('it-'+id)?.value)||0;
+    sub+=q*p; tax+=q*p*t/100;
+  });
+  const dp=parseFloat(gid('inv-disc')?.value)||0;
+  const da=sub*dp/100; const grand=sub+tax-da;
+  gid('t-sub').textContent=SYM+fmt(sub);
+  gid('t-tax').textContent=SYM+fmt(tax);
+  gid('t-dpct').textContent=dp;
+  gid('t-disc').textContent='−'+SYM+fmt(da);
+  gid('t-grand').textContent=SYM+fmt(grand);
+}
+
+const esc=s=>(s||'').replace(/"/g,'&quot;');
+const fmt=n=>(+n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const gid=id=>document.getElementById(id);
+const sv=(id,v)=>{const e=gid(id); if(e) e.value=v;};
+
+// ── Collect payload ───────────────────────────────────────────────
+function collect(){
+  const items=[];
+  document.querySelectorAll('.item').forEach(row=>{
+    const id=+row.id.split('-')[1];
+    items.push({
+      description:gid('id-'+id)?.value||'',
+      notes:gid('in-'+id)?.value||'',
+      quantity:parseFloat(gid('iq-'+id)?.value)||1,
+      unit_price:parseFloat(gid('ip-'+id)?.value)||0,
+      tax_rate:parseFloat(gid('it-'+id)?.value)||0,
+    });
+  });
+  return{
+    _id:CURRENT_ID,
+    currency:gid('inv-cur').value,
+    discount:parseFloat(gid('inv-disc').value)||0,
+    notes:gid('inv-notes').value,
+    payment_terms:gid('inv-terms').value,
+    bank_details:gid('inv-bank').value,
+    invoice:{number:gid('inv-num').value,date:gid('inv-date').value,due_date:gid('inv-due').value,status:STATUS},
+    company:{name:gid('co-name').value,tagline:gid('co-tag').value,email:gid('co-email').value,phone:gid('co-phone').value,website:gid('co-web').value,address:gid('co-addr').value},
+    client:{name:gid('cl-name').value,email:gid('cl-email').value,phone:gid('cl-phone').value,address:gid('cl-addr').value},
+    items,
+  };
+}
+
+// ── Validate ──────────────────────────────────────────────────────
+function validate(){
+  const n=gid('inv-num').value.trim(), f=gid('f-num');
+  if(!n){f.classList.add('err'); toast('Invoice number is required','err'); return false;}
+  f.classList.remove('err'); return true;
+}
+
+// ── Preview ───────────────────────────────────────────────────────
+function sp(){clearTimeout(PT); PT=setTimeout(refreshPreview,900);}
+
+async function refreshPreview(){
+  try{
+    const res=await fetch('/api/preview',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(collect())});
+    if(!res.ok)return;
+    const blob=await res.blob(), url=URL.createObjectURL(blob);
+    const fr=gid('preview-fr'), ph=gid('preview-ph');
+    fr.src=url; fr.style.display='block'; ph.style.display='none';
+  }catch(e){}
+}
+
+function printPDF(){
+  const fr=gid('preview-fr');
+  if(fr.style.display==='none'){toast('Preview first','err'); return;}
+  fr.contentWindow?.print();
+}
+
+// ── Download PDF ──────────────────────────────────────────────────
+async function dlPDF(){
+  if(!validate()) return;
+  const btn=gid('dl-btn'); btn.disabled=true; btn.classList.add('loading');
+  try{
+    const res=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(collect())});
+    if(!res.ok){toast('PDF generation failed','err'); return;}
+    const blob=await res.blob(), a=document.createElement('a');
+    a.href=URL.createObjectURL(blob); a.download=`invoice-${gid('inv-num').value}.pdf`;
+    a.click(); URL.revokeObjectURL(a.href); toast('PDF downloaded ✓');
+  }catch(e){toast('Network error','err');}
+  finally{btn.disabled=false; btn.classList.remove('loading');}
+}
+
+// ── Save ──────────────────────────────────────────────────────────
+async function saveInv(){
+  if(!validate()) return;
+  const btn=gid('save-btn'); btn.disabled=true; btn.classList.add('loading');
+  try{
+    const r=await fetch('/api/invoices',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(collect())});
+    const j=await r.json(); CURRENT_ID=j.id; IS_DIRTY=false; clearDraft();
+    toast('Invoice saved ✓'); refreshBadge();
+  }catch(e){toast('Save failed','err');}
+  finally{btn.disabled=false; btn.classList.remove('loading');}
+}
+
+// ── Export JSON ───────────────────────────────────────────────────
+function exportJSON(){
+  const d=collect(); const b=new Blob([JSON.stringify(d,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(b);
+  a.download=`invoice-${d.invoice.number}.json`; a.click(); URL.revokeObjectURL(a.href);
+  toast('JSON exported');
+}
+function exportCSV(){window.open('/api/export/csv','_blank'); toast('CSV download started');}
+function exportAllJSON(){window.open('/api/export/json','_blank'); toast('JSON download started');}
+
+// ── Load Sample ───────────────────────────────────────────────────
+function loadSample(){
+  sv('co-name','Pixel Studio Co.'); sv('co-tag','Design · Development · Strategy');
+  sv('co-email','hello@pixelstudio.io'); sv('co-phone','+1 (415) 555-0182');
+  sv('co-web','www.pixelstudio.io'); sv('co-addr','88 Market St, Suite 400, San Francisco, CA 94105');
+  sv('cl-name','Wayne Enterprises'); sv('cl-email','accounts@wayne.com');
+  sv('cl-phone','+1 (212) 555-8432'); sv('cl-addr','1007 Mountain Drive, Gotham, NJ 08401');
+  sv('inv-disc','5'); sv('inv-terms','Net 30 — Payment due within 30 days.');
+  sv('inv-notes','Thank you for your continued partnership!');
+  sv('inv-bank','Chase Bank  ·  Routing: 021000089  ·  Account: 4823019234');
+  ['co','cl','nt'].forEach(id=>{const b=gid('body-'+id); if(b.style.display==='none'){b.style.display='block'; gid('chev-'+id).classList.add('open');}});
+  gid('items-list').innerHTML=''; ITEM_ID=0;
+  [{description:'Brand Identity & Logo Design',notes:'3 concepts, unlimited revisions',quantity:1,unit_price:3500,tax_rate:8},
+   {description:'Website Design & Development',notes:'10-page responsive site, CMS integration',quantity:1,unit_price:8200,tax_rate:8},
+   {description:'SEO & Content Strategy',notes:'Keyword research, meta tags, sitemap',quantity:1,unit_price:1200,tax_rate:8},
+   {description:'Monthly Retainer — Social Media',notes:'4 posts/week × 3 platforms',quantity:3,unit_price:950,tax_rate:0},
+  ].forEach(addItem);
+  setSt('pending'); updateSym(); dirty(); sp(); toast('Sample data loaded');
+}
+
+// ── Templates ─────────────────────────────────────────────────────
+let TEMPLATES=[];
+async function loadTemplatesData(){
+  if(TEMPLATES.length) return;
+  const r=await fetch('/api/templates'); TEMPLATES=await r.json();
+}
+
+async function loadTemplatesGrid(targetId){
+  await loadTemplatesData();
+  const el=gid(targetId); if(!el) return;
+  el.innerHTML=TEMPLATES.map(t=>`
+    <div class="tpl-card" onclick="applyTemplate('${t.id}')">
+      <div class="tpl-name">${t.name}</div>
+      <div class="tpl-items">Click to apply</div>
+    </div>`).join('');
+}
+
+async function openTemplates(){
+  await loadTemplatesGrid('tpl-modal-grid');
+  gid('modal-tpl').classList.add('open');
+}
+
+async function applyTemplate(id){
+  const r=await fetch('/api/templates/'+id);
+  const t=await r.json();
+  gid('items-list').innerHTML=''; ITEM_ID=0;
+  (t.items||[]).forEach(addItem);
+  if(t.payment_terms) sv('inv-terms',t.payment_terms);
+  if(t.notes) sv('inv-notes',t.notes);
+  const b=gid('body-nt'); if(b.style.display==='none'){b.style.display='block'; gid('chev-nt').classList.add('open');}
+  closeModal('modal-tpl'); dirty(); sp();
+  toast('Template "'+t.name+'" applied');
+}
+
+// ── Dashboard ─────────────────────────────────────────────────────
+async function loadDashboard(){
+  try{
+    const [sr,ir,cr,clr]=await Promise.all([
+      fetch('/api/stats'),fetch('/api/invoices'),
+      fetch('/api/chart/revenue?months=6'),fetch('/api/clients')
+    ]);
+    const stats=await sr.json(), invs=await ir.json();
+    const chart=await cr.json(), clients=await clr.json();
+
+    sv_inner('ds-total',stats.total_invoices);
+    sv_inner('ds-rev','$'+fmt(stats.total_revenue));
+    sv_inner('ds-paid-c',(stats.paid||0)+' paid');
+    sv_inner('ds-pend',stats.pending||0);
+    sv_inner('ds-pend-r','$'+fmt(stats.pending_revenue||0));
+    sv_inner('ds-over',stats.overdue||0);
+    sv_inner('ds-over-r','$'+fmt(stats.overdue_revenue||0));
+
+    const total=stats.total_invoices||0;
+    const rate=total?Math.round((stats.paid||0)/total*100):0;
+    const avg=total?stats.total_revenue/total:0;
+    sv_inner('qs-rate',rate+'%');
+    sv_inner('qs-avg','$'+fmt(avg));
+    sv_inner('qs-paid','$'+fmt(stats.paid_revenue||0));
+    sv_inner('qs-out','$'+fmt((stats.pending_revenue||0)+(stats.overdue_revenue||0)));
+    sv_inner('qs-clients',clients.length);
+
+    renderChart(chart);
+
+    const recent=invs.slice(0,6);
+    gid('dash-recent').innerHTML=recent.length
+      ? `<div class="itbl"><div class="itbl-hd" style="grid-template-columns:100px 1fr 90px 100px 100px"><span>Invoice #</span><span>Client</span><span>Status</span><span>Amount</span><span>Action</span></div>${recent.map(i=>miniRow(i)).join('')}</div>`
+      : `<div class="empty"><svg width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M9 12h6m-3-3v6M3 7l1-1h16l1 1v12l-1 1H4l-1-1V7z"/></svg><p>No invoices yet. <a href="#" onclick="newInvoice()">Create one →</a></p></div>`;
+
+    refreshBadge(invs.length);
+  }catch(e){console.error(e);}
+}
+
+function sv_inner(id,v){const e=gid(id); if(e) e.textContent=v;}
+
+function miniRow(inv){
+  const sym=SYMS[inv.currency]||'$';
+  return `<div class="itbl-row" style="grid-template-columns:100px 1fr 90px 100px 100px" onclick="editInv('${inv.id}')">
+    <div class="itbl-cell mono">${inv.number}</div>
+    <div class="itbl-cell">${inv.client_name||'—'}</div>
+    <div class="itbl-cell"><span class="badge ${inv.status}">${inv.status}</span></div>
+    <div class="itbl-cell bold">${sym}${fmt(inv.total)}</div>
+    <div class="itbl-cell itbl-acts" onclick="event.stopPropagation()">
+      <button class="ia-btn e" onclick="editInv('${inv.id}')">Edit</button>
+      <button class="ia-btn p" onclick="dlSaved('${inv.id}')">PDF</button>
+    </div>
+  </div>`;
+}
+
+function renderChart(data){
+  const el=gid('chart-bars'); if(!data.length){return;}
+  const maxVal=Math.max(...data.map(d=>d.revenue||0),1);
+  el.innerHTML=data.map(d=>{
+    const h=Math.max(Math.round((d.revenue/maxVal)*140),3);
+    const ph=Math.max(Math.round((d.paid_revenue/maxVal)*140),3);
+    const lbl=d.month?d.month.split('-').slice(1).join('/')+'/'+d.month.split('-')[0].slice(2):d.month;
+    return`<div class="chart-bar-group">
+      <div style="height:${h}px;width:100%;position:relative;display:flex;align-items:flex-end">
+        <div class="chart-bar" style="height:${h}px;background:rgba(59,130,246,.35);width:100%;position:absolute" title="Total: $${fmt(d.revenue)}"></div>
+        <div class="chart-bar" style="height:${ph}px;background:#3B82F6;width:100%;position:relative" title="Paid: $${fmt(d.paid_revenue)}"></div>
+      </div>
+      <div class="chart-label">${lbl}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── History ───────────────────────────────────────────────────────
+async function loadHistory(){
+  const q=gid('h-search')?.value||'';
+  let url='/api/invoices';
+  const params=[];
+  if(HIST_FILTER) params.push('status='+HIST_FILTER);
+  if(q) params.push('q='+encodeURIComponent(q));
+  if(params.length) url+='?'+params.join('&');
+  const r=await fetch(url); const invs=await r.json();
+  gid('hist-count').textContent=invs.length+' invoice'+(invs.length!==1?'s':'');
+  renderHistory(invs); refreshBadge(invs.length);
+}
+
+function setFilter(btn,f){
+  HIST_FILTER=f; clearSel();
+  document.querySelectorAll('.filt-btn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on'); loadHistory();
+}
+
+function renderHistory(invs){
+  const el=gid('hist-rows');
+  if(!invs.length){
+    el.innerHTML='<div class="empty"><svg width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M9 12h6m-3-3v6M3 7l1-1h16l1 1v12l-1 1H4l-1-1V7z"/></svg><p>No invoices found.</p></div>';
+    return;
+  }
+  el.innerHTML=invs.map(inv=>{
+    const sym=SYMS[inv.currency]||'$';
+    return`<div class="itbl-row" onclick="editInv('${inv.id}')">
+      <div class="itbl-cell cb-col" onclick="event.stopPropagation()"><input type="checkbox" class="cb row-cb" data-id="${inv.id}" onchange="toggleSel('${inv.id}',this)"/></div>
+      <div class="itbl-cell mono">${inv.number}</div>
+      <div class="itbl-cell">${inv.client_name||'—'}</div>
+      <div class="itbl-cell dim">${inv.issue_date||'—'}</div>
+      <div class="itbl-cell"><span class="badge ${inv.status}">${inv.status}</span></div>
+      <div class="itbl-cell bold">${sym}${fmt(inv.total)}</div>
+      <div class="itbl-cell itbl-acts" onclick="event.stopPropagation()">
+        <button class="ia-btn e" onclick="editInv('${inv.id}')">Edit</button>
+        <button class="ia-btn p" onclick="dlSaved('${inv.id}')">PDF</button>
+        <button class="ia-btn cp" onclick="dupInv('${inv.id}')">Dup</button>
+        <button class="ia-btn d" onclick="delInv('${inv.id}')">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// Bulk selection
+function toggleSel(id,cb){
+  if(cb.checked) SELECTED.add(id); else SELECTED.delete(id);
+  updateBulkBar();
+}
+function toggleAll(cb){
+  document.querySelectorAll('.row-cb').forEach(c=>{
+    c.checked=cb.checked; const id=c.dataset.id;
+    if(cb.checked) SELECTED.add(id); else SELECTED.delete(id);
+  });
+  updateBulkBar();
+}
+function updateBulkBar(){
+  const n=SELECTED.size, bb=gid('bulk-bar');
+  bb.classList.toggle('visible',n>0);
+  gid('bulk-info').textContent=n+' selected';
+}
+function clearSel(){
+  SELECTED.clear(); document.querySelectorAll('.row-cb').forEach(c=>c.checked=false);
+  const ca=gid('cb-all'); if(ca) ca.checked=false;
+  updateBulkBar();
+}
+async function bulkStatus(s){
+  if(!SELECTED.size) return;
+  await fetch('/api/invoices/bulk-status',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ids:[...SELECTED],status:s})});
+  toast(`${SELECTED.size} invoices marked ${s}`); clearSel(); loadHistory(); loadDashboard();
+}
+async function bulkDelete(){
+  if(!SELECTED.size) return;
+  if(!confirm(`Delete ${SELECTED.size} invoice(s)?`)) return;
+  await fetch('/api/invoices/bulk-delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ids:[...SELECTED]})});
+  toast(`${SELECTED.size} invoices deleted`); clearSel(); loadHistory(); loadDashboard();
+}
+
+async function editInv(id){
+  try{
+    const r=await fetch('/api/invoices/'+id); if(!r.ok) return;
+    const d=await r.json(); CURRENT_ID=id; IS_DIRTY=false;
+    populateForm(d); go('editor'); sp();
+  }catch(e){toast('Failed to load invoice','err');}
+}
+
+function populateForm(d){
+  const inv=d.invoice||{}, co=d.company||{}, cl=d.client||{};
+  sv('inv-num',inv.number||''); sv('inv-date',inv.date||''); sv('inv-due',inv.due_date||'');
+  sv('inv-cur',d.currency||'USD'); sv('inv-disc',d.discount||0);
+  sv('inv-terms',d.payment_terms||''); sv('inv-notes',d.notes||''); sv('inv-bank',d.bank_details||'');
+  sv('co-name',co.name||''); sv('co-tag',co.tagline||''); sv('co-email',co.email||'');
+  sv('co-phone',co.phone||''); sv('co-web',co.website||''); sv('co-addr',co.address||'');
+  sv('cl-name',cl.name||''); sv('cl-email',cl.email||''); sv('cl-phone',cl.phone||''); sv('cl-addr',cl.address||'');
+  setSt(inv.status||'pending',false);
+  SYM=SYMS[d.currency||'USD']||'$';
+  gid('items-list').innerHTML=''; ITEM_ID=0; (d.items||[]).forEach(addItem); recalc();
+  ['co','cl','nt'].forEach(id=>{const b=gid('body-'+id); if(b.style.display==='none'){b.style.display='block'; gid('chev-'+id).classList.add('open');}});
+}
+
+function dlSaved(id){window.open('/api/invoices/'+id+'/pdf','_blank');}
+
+async function dupInv(id){
+  const r=await fetch('/api/invoices/'+id+'/duplicate',{method:'POST'});
+  const d=await r.json(); toast('Duplicated as '+d.number); loadHistory(); loadDashboard();
+}
+
+async function delInv(id){
+  if(!confirm('Delete this invoice?')) return;
+  await fetch('/api/invoices/'+id,{method:'DELETE'});
+  toast('Invoice deleted'); loadHistory(); loadDashboard();
+}
+
+function refreshBadge(n){
+  if(n===undefined){fetch('/api/invoices').then(r=>r.json()).then(d=>refreshBadge(d.length)); return;}
+  const b=gid('inv-badge'); b.textContent=n; b.style.display=n>0?'inline':'none';
+}
+
+// ── Clients ───────────────────────────────────────────────────────
+async function loadClients(){
+  const q=gid('cl-search')?.value||'';
+  const r=await fetch('/api/clients'+(q?'?q='+encodeURIComponent(q):''));
+  const clients=await r.json();
+  const el=gid('client-grid');
+  if(!clients.length){
+    el.innerHTML='<div class="empty"><svg width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><p>No clients yet. Add your first client.</p></div>';
+    return;
+  }
+  el.innerHTML=clients.map(c=>`
+    <div class="client-card">
+      <div class="cc-name">${c.name}</div>
+      ${c.email?`<div class="cc-row"><svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>${c.email}</div>`:''}
+      ${c.phone?`<div class="cc-row"><svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.5"/></svg>${c.phone}</div>`:''}
+      ${c.address?`<div class="cc-row" style="font-size:11px">${c.address}</div>`:''}
+      <div class="cc-btns">
+        <button class="btn btn-ghost btn-xs" onclick="billClient(${JSON.stringify(c).replace(/"/g,'&quot;')})">Invoice</button>
+        <button class="btn btn-ghost btn-xs" onclick="openClientModal(${JSON.stringify(c).replace(/"/g,'&quot;')})">Edit</button>
+        <button class="btn btn-danger btn-xs" onclick="delClient('${c.id}')">Del</button>
+      </div>
+    </div>`).join('');
+}
+
+function billClient(c){
+  newInvoice();
+  setTimeout(()=>{
+    sv('cl-name',c.name||''); sv('cl-email',c.email||''); sv('cl-phone',c.phone||''); sv('cl-addr',c.address||'');
+    const b=gid('body-cl'); if(b.style.display==='none'){b.style.display='block'; gid('chev-cl').classList.add('open');}
+    sp();
+  },100);
+}
+
+function openClientModal(cl={}){
+  sv('mc-id',cl.id||''); sv('mc-name',cl.name||''); sv('mc-email',cl.email||'');
+  sv('mc-phone',cl.phone||''); sv('mc-addr',cl.address||'');
+  gid('mc-title').textContent=cl.id?'Edit Client':'Add Client';
+  gid('modal-client').classList.add('open');
+}
+
+async function submitClient(){
+  const name=gid('mc-name').value.trim(); if(!name){toast('Name required','err'); return;}
+  const payload={id:gid('mc-id').value||undefined,name,email:gid('mc-email').value,phone:gid('mc-phone').value,address:gid('mc-addr').value};
+  await fetch('/api/clients',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+  closeModal('modal-client'); loadClients(); toast('Client saved ✓');
+}
+
+async function delClient(id){
+  if(!confirm('Delete this client?')) return;
+  await fetch('/api/clients/'+id,{method:'DELETE'}); loadClients(); toast('Client deleted');
+}
+
+// ── Client Autocomplete ───────────────────────────────────────────
+async function acSearch(){
+  const q=gid('cl-name').value; if(!q){closeAC(); return;}
+  const r=await fetch('/api/clients?q='+encodeURIComponent(q));
+  const cs=await r.json(); const ac=gid('ac-list');
+  if(!cs.length){closeAC(); return;}
+  ac.innerHTML=cs.slice(0,6).map(c=>`
+    <div class="ac-item" onclick="pickClient(${JSON.stringify(c).replace(/"/g,'&quot;')})">
+      <strong>${c.name}</strong><span>${c.email||c.address||''}</span>
+    </div>`).join('');
+  ac.classList.add('open');
+}
+function pickClient(c){sv('cl-name',c.name); sv('cl-email',c.email||''); sv('cl-phone',c.phone||''); sv('cl-addr',c.address||''); closeAC(); dirty(); sp();}
+function closeAC(){gid('ac-list')?.classList.remove('open');}
+document.addEventListener('click',e=>{if(!e.target.closest('.ac-wrap')) closeAC();});
+
+// ── Save to address book ──────────────────────────────────────────
+async function saveClToBook(){
+  const name=gid('cl-name').value.trim(); if(!name){toast('Enter client name first','err'); return;}
+  await fetch('/api/clients',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,email:gid('cl-email').value,phone:gid('cl-phone').value,address:gid('cl-addr').value})});
+  toast('Client saved to address book ✓');
+}
+
+// ── Settings ──────────────────────────────────────────────────────
+function showSP(id,btn){
+  document.querySelectorAll('.settings-section').forEach(s=>s.classList.remove('on'));
+  document.querySelectorAll('.sn-btn').forEach(b=>b.classList.remove('on'));
+  gid('sp-'+id)?.classList.add('on'); btn.classList.add('on');
+  if(id==='templates') loadTemplatesGrid('tpl-grid');
+}
+
+async function loadSettings(){
+  try{
+    const r=await fetch('/api/settings'); const s=await r.json();
+    if(s.company){
+      const co=s.company;
+      sv('co-name',co.name||''); sv('co-tag',co.tagline||''); sv('co-email',co.email||'');
+      sv('co-phone',co.phone||''); sv('co-web',co.website||''); sv('co-addr',co.address||'');
+    }
+    if(s.num_prefix) NUM_PREFIX=s.num_prefix;
+  }catch(e){}
+}
+
+async function loadSettingsUI(){
+  const r=await fetch('/api/settings'); const s=await r.json();
+  if(s.company){
+    const co=s.company;
+    sv('s-co-name',co.name||''); sv('s-co-tag',co.tagline||''); sv('s-co-email',co.email||'');
+    sv('s-co-phone',co.phone||''); sv('s-co-web',co.website||''); sv('s-co-addr',co.address||'');
+  }
+  if(s.num_prefix){sv('s-prefix',s.num_prefix); updateNumPreview();}
+}
+
+async function saveSettings(){
+  const co={name:gid('s-co-name').value,tagline:gid('s-co-tag').value,email:gid('s-co-email').value,phone:gid('s-co-phone').value,website:gid('s-co-web').value,address:gid('s-co-addr').value};
+  await fetch('/api/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({company:co})});
+  // mirror to editor fields
+  sv('co-name',co.name); sv('co-tag',co.tagline); sv('co-email',co.email);
+  sv('co-phone',co.phone); sv('co-web',co.website); sv('co-addr',co.address);
+  toast('Company defaults saved ✓');
+}
+
+async function saveCoDefaults(){
+  const co={name:gid('co-name').value,tagline:gid('co-tag').value,email:gid('co-email').value,phone:gid('co-phone').value,website:gid('co-web').value,address:gid('co-addr').value};
+  await fetch('/api/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({company:co})});
+  toast('Saved as default ✓');
+}
+
+function updateNumPreview(){
+  const p=gid('s-prefix')?.value||'INV';
+  NUM_PREFIX=p; gid('num-preview').textContent=p+'-'+new Date().getFullYear()+'-001';
+}
+
+async function saveNumSettings(){
+  const p=gid('s-prefix')?.value||'INV'; NUM_PREFIX=p;
+  await fetch('/api/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({num_prefix:p})});
+  toast('Numbering settings saved ✓');
+}
+
+async function markOverdue(){
+  const r=await fetch('/api/invoices/mark-overdue',{method:'POST'});
+  const d=await r.json(); toast(d.marked_overdue+' invoices marked overdue','info');
+  loadDashboard();
+}
+
+async function confirmDeleteAll(){
+  if(!confirm('This will permanently delete ALL invoices. Are you sure?')) return;
+  if(!confirm('This action cannot be undone. Type "DELETE" to confirm.\n\nClick OK to proceed.')) return;
+  const invs=await(await fetch('/api/invoices')).json();
+  await fetch('/api/invoices/bulk-delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ids:invs.map(i=>i.id)})});
+  toast('All invoices deleted','err'); loadDashboard();
+}
+
+// ── Modal ─────────────────────────────────────────────────────────
+function closeModal(id){gid(id).classList.remove('open');}
+function openShortcuts(){gid('modal-kb').classList.add('open');}
+
+// ── Sidebar ───────────────────────────────────────────────────────
+function toggleSidebar(){gid('sidebar').classList.toggle('open'); gid('overlay').style.display=gid('sidebar').classList.contains('open')?'block':'none';}
+function closeSidebar(){gid('sidebar').classList.remove('open'); gid('overlay').style.display='none';}
+
+// ── Keyboard shortcuts ────────────────────────────────────────────
+function setupKb(){
+  document.addEventListener('keydown',e=>{
+    const ctrl=e.ctrlKey||e.metaKey;
+    if(e.key==='Escape'){document.querySelectorAll('.modal-bg.open').forEach(m=>m.classList.remove('open')); closeAC();}
+    if(!ctrl) return;
+    const v=document.querySelector('.view.active')?.id;
+    if(e.key==='s'){e.preventDefault(); if(v==='view-editor') saveInv();}
+    if(e.key==='d'){e.preventDefault(); if(v==='view-editor') dlPDF();}
+    if(e.key==='p'){e.preventDefault(); if(v==='view-editor') printPDF();}
+    if(e.key==='n'){e.preventDefault(); newInvoice();}
+    if(e.key==='Enter'){e.preventDefault(); if(v==='view-editor') addItem();}
+  });
+}
+
+// ── Toast ─────────────────────────────────────────────────────────
+function toast(msg,type='ok'){
+  const t=gid('toast'); gid('t-msg').textContent=msg;
+  gid('t-icon').textContent=type==='ok'?'✓':type==='err'?'✕':'ℹ';
+  t.className='toast '+type+' show';
+  setTimeout(()=>t.classList.remove('show'),3200);
+}
+
+// ── Mobile Preview ────────────────────────────────────────────────
+function toggleMobilePreview(){
+  const overlay=gid('mob-preview-overlay');
+  const isOpen=overlay.style.display==='flex';
+  if(isOpen){
+    overlay.style.display='none';
+  } else {
+    overlay.style.display='flex';
+    // Sync the preview frame src from the desktop one
+    const desktopFr=gid('preview-fr');
+    const mobFr=gid('mob-preview-fr');
+    if(desktopFr.src && desktopFr.style.display!=='none'){
+      mobFr.src=desktopFr.src;
+    } else {
+      // Trigger a fresh preview render into mobile frame
+      fetch('/api/preview',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(collect())})
+        .then(r=>r.blob()).then(blob=>{mobFr.src=URL.createObjectURL(blob);});
+    }
+  }
+}
+
+// ── Unsaved Changes Warning ────────────────────────────────────────
+window.addEventListener('beforeunload',e=>{
+  if(IS_DIRTY && document.querySelector('.view.active')?.id==='view-editor'){
+    e.preventDefault();
+    e.returnValue='You have unsaved changes. Leave anyway?';
+    return e.returnValue;
+  }
+});
+
+// ── Auto-save draft to localStorage ───────────────────────────────
+const autosaveDraft=IF_debounce(()=>{
+  if(!IS_DIRTY) return;
+  try{ localStorage.setItem('if_draft', JSON.stringify(collect())); }
+  catch(e){}
+},3000);
+
+function IF_debounce(fn,ms){let t; return(...a)=>{clearTimeout(t);t=setTimeout(()=>fn(...a),ms);};}
+
+// ── Restore draft on load ─────────────────────────────────────────
+function restoreDraft(){
+  try{
+    const raw=localStorage.getItem('if_draft');
+    if(!raw) return;
+    const d=JSON.parse(raw);
+    // Only restore if user hasn't navigated to edit an existing saved invoice
+    if(CURRENT_ID) return;
+    if(!d?.invoice?.number) return;
+    populateForm(d);
+    IS_DIRTY=true;
+    toast('Draft restored from last session','info');
+  } catch(e){}
+}
+
+// ── Clear draft after successful save ─────────────────────────────
+// (draft is cleared inside saveInv after success via clearDraft())
+function clearDraft(){ try{localStorage.removeItem('if_draft');}catch(e){} }
+
+
+</script>
+{%- endraw %}
+<script src="/static/js/utils.js"></script>
+</body>
+</html>

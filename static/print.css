@@ -1,0 +1,67 @@
+/* ── InvoiceForge Print Stylesheet ─────────────────────────────
+   Applied automatically when the user prints from the browser.
+   Hides all UI chrome and renders only the invoice preview.
+──────────────────────────────────────────────────────────────── */
+
+@media print {
+  /* Hide everything except the preview iframe */
+  .sidebar,
+  .topbar,
+  .action-bar,
+  .preview-pane-hd,
+  .overlay,
+  .modal-bg,
+  .toast,
+  nav,
+  button {
+    display: none !important;
+  }
+
+  body {
+    background: #fff !important;
+    color: #000 !important;
+    margin: 0;
+    padding: 0;
+  }
+
+  .shell,
+  .main,
+  .view,
+  .editor-wrap {
+    display: block !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+  }
+
+  /* Show only the preview pane, full width */
+  .preview-pane {
+    display: block !important;
+    position: static !important;
+    height: auto !important;
+    border: none !important;
+    width: 100% !important;
+  }
+
+  .preview-area {
+    height: 100vh !important;
+    overflow: visible !important;
+  }
+
+  .preview-area iframe {
+    width: 100% !important;
+    height: 100vh !important;
+    border: none !important;
+  }
+
+  /* Hide placeholder */
+  .preview-ph {
+    display: none !important;
+  }
+
+  /* Page settings */
+  @page {
+    margin: 0;
+    size: A4 portrait;
+  }
+}

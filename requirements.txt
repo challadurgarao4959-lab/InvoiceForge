@@ -1,0 +1,4 @@
+# InvoiceForge — Python dependencies
+flask>=3.0.0
+reportlab>=4.0.0
+gunicorn>=21.0.0     # production WSGI server (Linux/macOS only)
