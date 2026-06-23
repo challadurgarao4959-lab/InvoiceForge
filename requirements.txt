@@ -10,3 +10,8 @@ packaging==26.2
 pillow==12.2.0
 reportlab==4.5.1
 Werkzeug==3.1.8
+pymongo==4.6.3
+mongomock==4.1.2
+setuptools==82.0.1
+certifi==2026.6.17
+

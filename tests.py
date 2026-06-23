@@ -4,7 +4,20 @@ InvoiceForge — Full Test Suite
 Run:  python tests.py
 """
 import json, sys, re, unittest
+from types import ModuleType
+
+# Mock pkg_resources for compatibility in Python 3.14+
+pkg_resources_mock = ModuleType('pkg_resources')
+class DummyDist:
+    version = '4.1.2'
+pkg_resources_mock.get_distribution = lambda name: DummyDist()
+sys.modules['pkg_resources'] = pkg_resources_mock
+
+import mongomock
+import pymongo
+pymongo.MongoClient = mongomock.MongoClient
 from app import app, build_pdf, calc_totals, _strip_rl_tags, sanitize_invoice
+
 
 # ── Shared sample payload ────────────────────────────────────────
 SAMPLE = {

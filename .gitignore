@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.Python
+*.egg-info/
+dist/
+build/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Database — don't commit SQLite file
+data/
+*.db
+*.sqlite3
+
+# Environment secrets — NEVER commit
+.env
+
+# macOS
+.DS_Store
+
+# VS Code
+.vscode/
+
+# Vercel
+.vercel/
+
+# Logs
+*.log
